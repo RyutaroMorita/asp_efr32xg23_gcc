@@ -1,0 +1,127 @@
+#
+#		Makefile のターゲット依存部（xG23B 868-915 MHz 14 dBm Radio Board用）
+#
+
+#
+#  ボード名, チップ名，コア名，開発環境名の定義
+#
+BOARD = brd4002a+efr32zg23
+PRC   = efr32xg23
+DEVICE = EFR32ZG23
+DEVICE_S = efr32zg23
+PROJECT = project
+MODEL = $(DEVICE)B020F512IM48
+TOOL  = gcc
+SDK   = simplicity_sdk_2024.6.2
+
+#
+#  FPUを使用するか
+#
+FPU_USAGE = FPU_LAZYSTACKING
+
+#
+#  コンパイルオプション
+#
+INCLUDES := $(INCLUDES) \
+	-I$(TARGETDIR) \
+	-I$(TARGETDIR)/$(PROJECT)/autogen \
+	-I$(TARGETDIR)/$(PROJECT)/config \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/hardware/board/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/hardware/driver/configuration_over_swo/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/CMSIS/Core/Include \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/common/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/Device/SiliconLabs/$(DEVICE)/Include \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/driver/debug/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/emlib/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/peripheral/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/clock_manager/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/device_init/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/device_manager/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/interrupt_manager/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/sleeptimer/inc \
+	-I$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/system/inc
+CDEFS := $(CDEFS) -D$(MODEL)=1
+COPTS := $(COPTS)
+LDFLAGS := -nostdlib $(LDFLAGS)
+CFG1_OUT_LDFLAGS := -nostdlib $(CFG1_OUT_LDFLAGS)
+
+#
+# ファイルサイズ削減のためのオプション
+#
+#COPTS   := $(COPTS) -ffunction-sections -fdata-sections
+COPTS   := $(COPTS) -ffunction-sections
+LDFLAGS := $(LDFLAGS) -Wl,--gc-sections
+
+#
+#  カーネルに関する定義
+#
+KERNEL_DIR := $(KERNEL_DIR) \
+	$(TARGETDIR) \
+	$(TARGETDIR)/$(PROJECT)/autogen \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/hardware/board/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/hardware/driver/configuration_over_swo/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/common/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/Device/SiliconLabs/$(DEVICE)/Source \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/driver/debug/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/emlib/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/peripheral/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/system/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/clock_manager/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/device_init/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/device_manager/clocks \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/device_manager/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/interrupt_manager/src \
+	$(TARGETDIR)/$(PROJECT)/$(SDK)/platform/service/sleeptimer/src
+KERNEL_ASMOBJS := $(KERNEL_ASMOBJS) start.o
+KERNEL_COBJS := $(KERNEL_COBJS) \
+	em_cmu.o \
+	em_emu.o \
+	em_eusart.o \
+	em_gpio.o \
+	em_usart.o \
+	sl_board_control_gpio.o \
+	sl_board_default_init.o \
+	sl_board_init.o \
+	sl_clock_manager.o \
+	sl_clock_manager_hal_s2.o \
+	sl_clock_manager_init.o \
+	sl_clock_manager_init_hal_s2.o \
+	sl_core_cortexm.o \
+	sl_cos.o \
+	sl_debug_swo.o \
+	sl_device_clock_$(PRC).o \
+	sl_device_init_dcdc_s2.o \
+	sl_device_init_emu_s2.o \
+	sl_event_handler.o \
+	sl_interrupt_manager_cortexm.o \
+	sl_system_init.o \
+	system_$(DEVICE_S).o \
+	target_config.o
+KERNEL_CFLAGS := $(KERNEL_CFLAGS)
+
+#
+#  システムサービスに関する定義
+#
+SYSSVC_DIR := $(SYSSVC_DIR)
+SYSSVC_COBJS := $(SYSSVC_COBJS) usart.o
+
+#
+#  GNU開発環境のターゲットアーキテクチャの定義
+#
+GCC_TARGET = arm-none-eabi
+
+#
+#  リンカスクリプトの定義
+#
+LDSCRIPT = $(SRCDIR)/target/$(BOARD)_$(TOOL)/$(BOARD).ld
+
+#
+#  依存関係の定義
+#
+kernel_cfg.timestamp: $(TARGETDIR)/target.tf
+$(OBJFILE): $(TARGETDIR)/target_check.tf
+
+#
+#  チップ依存部のインクルード
+#
+include $(SRCDIR)/arch/$(PRC)_$(TOOL)/Makefile.prc
