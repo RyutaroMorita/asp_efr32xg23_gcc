@@ -76,11 +76,6 @@
 #define LOOP_REF		ULONG_C(1000000)	/* 速度計測用のループ回数 */
 #endif /* LOOP_REF */
 
-#define INHNO_USART3		(USART3_IRQn + 16)	/* 39 */
-#define INTNO_USART3		(USART3_IRQn + 16)	/* 39 */
-#define INTATR_USART3		(TA_ENAINT)			/* 割込み属性	*/
-#define INTPRI_USART3		(-1)				/* 割込み優先度	*/
-
 /*
  *  関数のプロトタイプ宣言
  */
@@ -88,14 +83,11 @@
 
 extern void	task(intptr_t exinf);
 extern void	main_task(intptr_t exinf);
-extern void usb_task(intptr_t exinf);
-extern void	udp_task(intptr_t exinf);
-extern void	tcpip_task(intptr_t exinf);
 extern void	tex_routine(TEXPTN texptn, intptr_t exinf);
 #ifdef CPUEXC1
 extern void	cpuexc_handler(void *p_excinf);
 #endif /* CPUEXC1 */
 extern void	cyclic_handler(intptr_t exinf);
 extern void	alarm_handler(intptr_t exinf);
-extern void tim5_handler(void);
+
 #endif /* TOPPERS_MACRO_ONLY */
